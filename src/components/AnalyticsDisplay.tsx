@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
@@ -11,6 +11,12 @@ interface CsvAnalyticsDisplayProps {
 
 const AnalyticsDisplay = ({ issues, mergeRequests, comments }: CsvAnalyticsDisplayProps) => {
   const [activeTable, setActiveTable] = useState<"issues" | "mergeRequests" | "comments" | null>(null);
+
+  useEffect(() => {
+    console.log("Issues:", issues);
+    console.log("Merge Requests:", mergeRequests);
+    console.log("Comments:", comments);
+  }, [issues, mergeRequests, comments]);
 
   const renderTable = (data: Record<string, string>[]) => {
     if (!data.length) {

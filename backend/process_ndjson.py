@@ -14,7 +14,7 @@ def format_date(date_str):
         return None
 
 def process_gitlab_export(extracted_path: Path, output_path: Path):
-    print(f"🗂 Extracted to: {extracted_path}")
+    print(f"Extracted to: {extracted_path}")
 
     # Find correct subfolder containing 'tree/project'
     tree_path = None

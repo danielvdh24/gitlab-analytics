@@ -1,5 +1,6 @@
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 import shutil
 import zipfile
@@ -10,6 +11,7 @@ from process_ndjson import process_gitlab_export
 
 app = FastAPI()
 
+# CORS middleware for local/frontend access
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -17,6 +19,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount static folder so frontend can access generated CSV files
+app.mount("/static", StaticFiles(directory="temp_uploads"), name="static")
 
 @app.post("/process")
 async def upload_gitlab_export(file: UploadFile = File(...)):
@@ -26,11 +31,12 @@ async def upload_gitlab_export(file: UploadFile = File(...)):
     output_dir = upload_dir / "output"
     upload_dir.mkdir(parents=True, exist_ok=True)
 
+    # Save the uploaded file
     zip_path = upload_dir / file.filename
     with open(zip_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Handle both .zip and .tar.gz
+    # Extract archive
     if zip_path.suffix == ".zip":
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(extract_dir)
@@ -40,10 +46,15 @@ async def upload_gitlab_export(file: UploadFile = File(...)):
     else:
         return {"error": "Unsupported archive format. Use .zip or .tar.gz"}
 
-    result = process_gitlab_export(extract_dir, output_dir)
+    # Process and return URLs to CSVs
+    result_paths = process_gitlab_export(extract_dir, output_dir)
     return {
         "message": "Processed successfully",
-        "files": result
+        "files": {
+            "issues": f"/static/{temp_id}/output/cleaned_issues.csv",
+            "merge_requests": f"/static/{temp_id}/output/cleaned_merge_requests.csv",
+            "comments": f"/static/{temp_id}/output/all_comments.csv"
+        }
     }
 
 if __name__ == "__main__":

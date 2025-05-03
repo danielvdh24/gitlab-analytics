@@ -29,12 +29,12 @@ const Index = () => {
 
       const result = await response.json();
 
-      const backendURL = "https://gitlab-analytics.onrender.com";
+      const baseUrl = "https://gitlab-analytics.onrender.com/";
 
       const [issuesCSV, mergeRequestsCSV, commentsCSV] = await Promise.all([
-        fetch(`${backendURL}/${result.files.issues}`).then((res) => res.text()),
-        fetch(`${backendURL}/${result.files.merge_requests}`).then((res) => res.text()),
-        fetch(`${backendURL}/${result.files.comments}`).then((res) => res.text()),
+        fetch(baseUrl + result.files.issues).then((res) => res.text()),
+        fetch(baseUrl + result.files.merge_requests).then((res) => res.text()),
+        fetch(baseUrl + result.files.comments).then((res) => res.text()),
       ]);
 
       const parseCSV = (csv: string): Record<string, string>[] => {
@@ -55,7 +55,7 @@ const Index = () => {
         comments: parseCSV(commentsCSV),
       });
 
-      toast({ title: "✅ Success", description: "Repository processed." });
+      toast({ title: "Success", description: "Repository processed." });
     } catch (err) {
       toast({ title: "Upload failed", variant: "destructive" });
     } finally {
