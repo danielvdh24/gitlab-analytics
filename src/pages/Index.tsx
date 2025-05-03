@@ -29,12 +29,14 @@ const Index = () => {
 
       const result = await response.json();
 
-      const baseUrl = "https://gitlab-analytics.onrender.com/";
+      const baseUrl = "https://gitlab-analytics.onrender.com";
+
+      const normalize = (path: string) => path.replace(/^\/+/, ""); // remove leading slashes
 
       const [issuesCSV, mergeRequestsCSV, commentsCSV] = await Promise.all([
-        fetch(baseUrl + result.files.issues).then((res) => res.text()),
-        fetch(baseUrl + result.files.merge_requests).then((res) => res.text()),
-        fetch(baseUrl + result.files.comments).then((res) => res.text()),
+        fetch(`${baseUrl}/${normalize(result.files.issues)}`).then((res) => res.text()),
+        fetch(`${baseUrl}/${normalize(result.files.merge_requests)}`).then((res) => res.text()),
+        fetch(`${baseUrl}/${normalize(result.files.comments)}`).then((res) => res.text()),
       ]);
 
       const parseCSV = (csv: string): Record<string, string>[] => {
@@ -65,7 +67,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center p-6">
-      <div className="max-w-4xl w-full flex flex-col items-center">
+      <div className="w-full px-4 flex flex-col items-center">
         <h1 className="text-4xl font-bold mb-3 text-center">GitLab Export Viewer</h1>
         <p className="text-muted-foreground text-xl mb-8 text-center">
           Upload your exported GitLab repository to view analytics

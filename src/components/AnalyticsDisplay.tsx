@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 
 interface CsvAnalyticsDisplayProps {
   issues: Record<string, string>[];
@@ -10,60 +9,85 @@ interface CsvAnalyticsDisplayProps {
 }
 
 const AnalyticsDisplay = ({ issues, mergeRequests, comments }: CsvAnalyticsDisplayProps) => {
-  const [activeTable, setActiveTable] = useState<"issues" | "mergeRequests" | "comments" | null>(null);
-
   useEffect(() => {
     console.log("Issues:", issues);
     console.log("Merge Requests:", mergeRequests);
     console.log("Comments:", comments);
   }, [issues, mergeRequests, comments]);
 
-  const renderTable = (data: Record<string, string>[]) => {
-    if (!data.length) {
-      return <p className="text-muted-foreground text-center mt-4">No data available.</p>;
+  const openTableInNewTab = (data: Record<string, string>[], title: string) => {
+    if (!data.length) return;
+
+    const headers = Object.keys(data[0]);
+
+    const tableHtml = `
+      <html>
+        <head>
+          <title>${title}</title>
+          <style>
+            body {
+              font-family: sans-serif;
+              padding: 2rem;
+              background-color: white;
+              color: black;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              table-layout: auto;
+              font-size: 14px;
+            }
+            th, td {
+              border: 1px solid #ccc;
+              padding: 8px;
+              text-align: left;
+              vertical-align: top;
+              white-space: pre-wrap;
+              word-wrap: break-word;
+              max-width: 400px;
+            }
+            th {
+              background-color: #f2f2f2;
+            }
+          </style>
+        </head>
+        <body>
+          <h2>${title}</h2>
+          <table>
+            <thead>
+              <tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr>
+            </thead>
+            <tbody>
+              ${data.map(row => `
+                <tr>
+                  ${headers.map(h => `<td>${(row[h] || "").replace(/\n/g, "<br>")}</td>`).join("")}
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+
+    const win = window.open("", "_blank");
+    if (win) {
+      win.document.write(tableHtml);
+      win.document.close();
     }
-  
-    return (
-      <div className="overflow-auto max-h-[600px] border rounded-xl mt-6">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {Object.keys(data[0] || {}).map((key) => (
-                <TableHead key={key}>{key}</TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.map((row, idx) => (
-              <TableRow key={idx}>
-                {Object.values(row).map((val, i) => (
-                  <TableCell key={i} className="whitespace-pre-wrap max-w-[400px]">
-                    {val}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    );
   };
 
   return (
-    <div className="space-y-8">
+    <div className="w-full max-w-7xl mx-auto space-y-8">
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-center text-xl">Project Data</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col items-center space-y-4">
+        <CardContent className="px-4 py-6 flex flex-col items-center space-y-4">
           <div className="flex justify-center gap-4">
-            <Button onClick={() => setActiveTable("issues")}>Issues</Button>
-            <Button onClick={() => setActiveTable("mergeRequests")}>Merge Requests</Button>
-            <Button onClick={() => setActiveTable("comments")}>Comments</Button>
+            <Button onClick={() => openTableInNewTab(issues, "Issues")}>Issues</Button>
+            <Button onClick={() => openTableInNewTab(mergeRequests, "Merge Requests")}>Merge Requests</Button>
+            <Button onClick={() => openTableInNewTab(comments, "Comments")}>Comments</Button>
           </div>
-          {activeTable === "issues" && renderTable(issues)}
-          {activeTable === "mergeRequests" && renderTable(mergeRequests)}
-          {activeTable === "comments" && renderTable(comments)}
         </CardContent>
       </Card>
 
