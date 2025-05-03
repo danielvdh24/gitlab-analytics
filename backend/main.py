@@ -21,6 +21,7 @@ app.add_middleware(
 )
 
 # Mount static folder so frontend can access generated CSV files
+Path("temp_uploads").mkdir(parents=True, exist_ok=True)
 app.mount("/static", StaticFiles(directory="temp_uploads"), name="static")
 
 @app.post("/process")
