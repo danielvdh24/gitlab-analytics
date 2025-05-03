@@ -16,12 +16,36 @@ def format_date(date_str):
         return None
 
 def process_gitlab_export(extracted_path: Path, output_path: Path):
-    inner_root = next(extracted_path.iterdir())
-    tree_path = inner_root / "tree" / "project"
+    # Identify inner folder after extraction
+    try:
+        inner_root = next(extracted_path.iterdir())
+    except StopIteration:
+        raise RuntimeError("No contents found in extracted directory.")
 
-    issues_df = load_ndjson(tree_path / "issues.ndjson")
-    mr_df = load_ndjson(tree_path / "merge_requests.ndjson")
-    members_df = load_ndjson(tree_path / "project_members.ndjson")
+    print(f"🗂 Extracted to: {inner_root}")
+
+    # Path to the relevant ndjson files
+    tree_path = inner_root / "tree" / "project"
+    print(f"Looking for NDJSON files in: {tree_path}")
+
+    # File paths
+    issues_file = tree_path / "issues.ndjson"
+    mr_file = tree_path / "merge_requests.ndjson"
+    members_file = tree_path / "project_members.ndjson"
+
+    # Check existence
+    for file in [issues_file, mr_file, members_file]:
+        if not file.exists():
+            raise FileNotFoundError(f"Required file not found: {file}")
+
+    print("All required NDJSON files found.")
+
+    # Load data
+    issues_df = load_ndjson(issues_file)
+    mr_df = load_ndjson(mr_file)
+    members_df = load_ndjson(members_file)
+
+    print(f"Loaded {len(issues_df)} issues, {len(mr_df)} merge requests, {len(members_df)} members")
 
     id_to_username = {
         row['user_id']: row['user']['username']
