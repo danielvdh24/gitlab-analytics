@@ -1,5 +1,3 @@
-# backend/process_ndjson.py
-
 import pandas as pd
 import json
 from datetime import datetime
@@ -16,19 +14,19 @@ def format_date(date_str):
         return None
 
 def process_gitlab_export(extracted_path: Path, output_path: Path):
-    # Identify inner folder after extraction
-    try:
-        inner_root = next(extracted_path.iterdir())
-    except StopIteration:
-        raise RuntimeError("No contents found in extracted directory.")
+    print(f"🗂 Extracted to: {extracted_path}")
 
-    print(f"🗂 Extracted to: {inner_root}")
+    # Find correct subfolder containing 'tree/project'
+    tree_path = None
+    for subdir in extracted_path.rglob("tree/project"):
+        tree_path = subdir
+        break
 
-    # Path to the relevant ndjson files
-    tree_path = inner_root / "tree" / "project"
+    if not tree_path:
+        raise FileNotFoundError("Could not locate 'tree/project' folder in extracted archive.")
+
     print(f"Looking for NDJSON files in: {tree_path}")
 
-    # File paths
     issues_file = tree_path / "issues.ndjson"
     mr_file = tree_path / "merge_requests.ndjson"
     members_file = tree_path / "project_members.ndjson"
@@ -40,12 +38,11 @@ def process_gitlab_export(extracted_path: Path, output_path: Path):
 
     print("All required NDJSON files found.")
 
-    # Load data
     issues_df = load_ndjson(issues_file)
     mr_df = load_ndjson(mr_file)
     members_df = load_ndjson(members_file)
 
-    print(f"Loaded {len(issues_df)} issues, {len(mr_df)} merge requests, {len(members_df)} members")
+    print(f"Loaded: {len(issues_df)} issues, {len(mr_df)} merge requests, {len(members_df)} members")
 
     id_to_username = {
         row['user_id']: row['user']['username']
@@ -107,7 +104,9 @@ def process_gitlab_export(extracted_path: Path, output_path: Path):
             issues_df[new_col] = issues_df[old_col].apply(lambda x: id_to_username.get(int(x), 'Unknown') if pd.notna(x) else None)
             issues_df.drop(columns=[old_col], inplace=True)
 
-    issues_df['assigned_username'] = issues_df['issue_assignees'].apply(lambda assignees: id_to_username.get(assignees[0]['user_id'], 'Unknown') if isinstance(assignees, list) and assignees else None)
+    issues_df['assigned_username'] = issues_df['issue_assignees'].apply(
+        lambda assignees: id_to_username.get(assignees[0]['user_id'], 'Unknown') if isinstance(assignees, list) and assignees else None
+    )
     issues_df.drop(columns=['issue_assignees'], inplace=True, errors='ignore')
 
     cols = list(issues_df.columns)
@@ -192,6 +191,7 @@ def process_gitlab_export(extracted_path: Path, output_path: Path):
     mr_df.to_csv(output_path / "cleaned_merge_requests.csv", index=False)
     comments_df.to_csv(output_path / "all_comments.csv", index=False)
 
+    print("CSV files exported.")
     return {
         "issues": str(output_path / "cleaned_issues.csv"),
         "merge_requests": str(output_path / "cleaned_merge_requests.csv"),
