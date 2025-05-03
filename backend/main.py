@@ -1,10 +1,9 @@
-# backend/main.py
-
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 import shutil
 import zipfile
+import tarfile
 import uuid
 
 from process_ndjson import process_gitlab_export
@@ -31,8 +30,15 @@ async def upload_gitlab_export(file: UploadFile = File(...)):
     with open(zip_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-        zip_ref.extractall(extract_dir)
+    # Handle both .zip and .tar.gz
+    if zip_path.suffix == ".zip":
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(extract_dir)
+    elif zip_path.suffixes[-2:] == [".tar", ".gz"] or zip_path.suffix == ".tgz":
+        with tarfile.open(zip_path, "r:gz") as tar_ref:
+            tar_ref.extractall(extract_dir)
+    else:
+        return {"error": "Unsupported archive format. Use .zip or .tar.gz"}
 
     result = process_gitlab_export(extract_dir, output_dir)
     return {
