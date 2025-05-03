@@ -16,7 +16,9 @@ def format_date(date_str):
         return None
 
 def process_gitlab_export(extracted_path: Path, output_path: Path):
-    tree_path = extracted_path / "tree" / "project"
+    inner_root = next(extracted_path.iterdir())
+    tree_path = inner_root / "tree" / "project"
+
     issues_df = load_ndjson(tree_path / "issues.ndjson")
     mr_df = load_ndjson(tree_path / "merge_requests.ndjson")
     members_df = load_ndjson(tree_path / "project_members.ndjson")

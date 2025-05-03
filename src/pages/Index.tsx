@@ -29,10 +29,12 @@ const Index = () => {
 
       const result = await response.json();
 
+      const backendURL = "https://gitlab-analytics.onrender.com";
+
       const [issuesCSV, mergeRequestsCSV, commentsCSV] = await Promise.all([
-        fetch(result.files.issues).then((res) => res.text()),
-        fetch(result.files.merge_requests).then((res) => res.text()),
-        fetch(result.files.comments).then((res) => res.text()),
+        fetch(`${backendURL}/${result.files.issues}`).then((res) => res.text()),
+        fetch(`${backendURL}/${result.files.merge_requests}`).then((res) => res.text()),
+        fetch(`${backendURL}/${result.files.comments}`).then((res) => res.text()),
       ]);
 
       const parseCSV = (csv: string): Record<string, string>[] => {
