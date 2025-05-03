@@ -39,3 +39,7 @@ async def upload_gitlab_export(file: UploadFile = File(...)):
         "message": "Processed successfully",
         "files": result
     }
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=10000)
