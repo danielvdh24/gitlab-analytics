@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: gitlab-analytics-backend
+    env: python
+    plan: free
+    repo: https://github.com/danielvdh24/gitlab-analytics
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: PORT
+        value: 10000
+    rootDir: backend
