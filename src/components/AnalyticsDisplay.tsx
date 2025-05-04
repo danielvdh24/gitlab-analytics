@@ -6,9 +6,10 @@ interface CsvAnalyticsDisplayProps {
   issues: Record<string, string>[];
   mergeRequests: Record<string, string>[];
   comments: Record<string, string>[];
+  gitstatsUrl?: string;
 }
 
-const AnalyticsDisplay = ({ issues, mergeRequests, comments }: CsvAnalyticsDisplayProps) => {
+const AnalyticsDisplay = ({ issues, mergeRequests, comments, gitstatsUrl }: CsvAnalyticsDisplayProps) => {
   useEffect(() => {
     console.log("Issues:", issues);
     console.log("Merge Requests:", mergeRequests);
@@ -17,19 +18,19 @@ const AnalyticsDisplay = ({ issues, mergeRequests, comments }: CsvAnalyticsDispl
 
   const openTableInNewTab = (data: Record<string, string>[], title: string) => {
     if (!data.length) return;
-  
+
     const headers = Object.keys(data[0]);
-  
+
     const csvContent = [
       headers.join(","),
       ...data.map(row =>
         headers.map(h => `"${(row[h] || "").replace(/"/g, '""')}"`).join(",")
       )
     ].join("\n");
-  
+
     const csvBlob = new Blob([csvContent], { type: "text/csv" });
     const csvUrl = URL.createObjectURL(csvBlob);
-  
+
     const tableHtml = `
       <html>
         <head>
@@ -107,13 +108,13 @@ const AnalyticsDisplay = ({ issues, mergeRequests, comments }: CsvAnalyticsDispl
         </body>
       </html>
     `;
-  
+
     const win = window.open("", "_blank");
     if (win) {
       win.document.write(tableHtml);
       win.document.close();
     }
-  };  
+  };
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-8">
@@ -135,9 +136,13 @@ const AnalyticsDisplay = ({ issues, mergeRequests, comments }: CsvAnalyticsDispl
           <CardTitle className="text-center text-xl">GitStats Overview</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground text-center">
-            GitStats visualizations will appear here once implemented.
-          </p>
+          {gitstatsUrl && (
+            <div className="flex justify-center mt-4">
+              <Button onClick={() => window.open(gitstatsUrl, "_blank")}>
+                Open GitStats Report
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

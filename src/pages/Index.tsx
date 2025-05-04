@@ -13,10 +13,13 @@ const Index = () => {
     comments: Record<string, string>[];
   } | null>(null);
 
+  const [gitstatsUrl, setGitstatsUrl] = useState<string | null>(null);
+
   const handleFileUpload = async (file: File) => {
     try {
       setIsLoading(true);
       setCsvData(null);
+      setGitstatsUrl(null);
 
       const formData = new FormData();
       formData.append("file", file);
@@ -31,9 +34,9 @@ const Index = () => {
       const result = await response.json();
 
       const baseUrl = "https://gitlab-analytics.onrender.com";
+      const normalize = (path: string) => path.replace(/^\/+/, "");
 
-      const normalize = (path: string) => path.replace(/^\/+/, ""); // remove leading slashes
-
+      // Fetch CSV files
       const [issuesCSV, mergeRequestsCSV, commentsCSV] = await Promise.all([
         fetch(`${baseUrl}/${normalize(result.files.issues)}`).then((res) => res.text()),
         fetch(`${baseUrl}/${normalize(result.files.merge_requests)}`).then((res) => res.text()),
@@ -48,11 +51,16 @@ const Index = () => {
         return data;
       };
 
+      // Set parsed data and GitStats URL
       setCsvData({
         issues: parseCSV(issuesCSV),
         mergeRequests: parseCSV(mergeRequestsCSV),
         comments: parseCSV(commentsCSV),
       });
+
+      if (result.files.gitstats) {
+        setGitstatsUrl(`${baseUrl}/${normalize(result.files.gitstats)}`);
+      }
 
       toast({ title: "Success", description: "Repository processed." });
     } catch (err) {
@@ -81,6 +89,7 @@ const Index = () => {
               issues={csvData.issues}
               mergeRequests={csvData.mergeRequests}
               comments={csvData.comments}
+              gitstatsUrl={gitstatsUrl}
             />
           </div>
         )}

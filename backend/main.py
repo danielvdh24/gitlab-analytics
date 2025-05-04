@@ -6,12 +6,13 @@ import shutil
 import zipfile
 import tarfile
 import uuid
+import subprocess
 
 from process_ndjson import process_gitlab_export
 
 app = FastAPI()
 
-# CORS middleware for local/frontend access
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -20,7 +21,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount static folder so frontend can access generated CSV files
+# Ensure temp_uploads directory exists
 Path("temp_uploads").mkdir(parents=True, exist_ok=True)
 app.mount("/static", StaticFiles(directory="temp_uploads"), name="static")
 
@@ -30,6 +31,7 @@ async def upload_gitlab_export(file: UploadFile = File(...)):
     upload_dir = Path("temp_uploads") / temp_id
     extract_dir = upload_dir / "unzipped"
     output_dir = upload_dir / "output"
+    gitstats_repo = upload_dir / "gitstats_repo"
     upload_dir.mkdir(parents=True, exist_ok=True)
 
     # Save the uploaded file
@@ -37,7 +39,7 @@ async def upload_gitlab_export(file: UploadFile = File(...)):
     with open(zip_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Extract archive
+    # Extract
     if zip_path.suffix == ".zip":
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(extract_dir)
@@ -47,14 +49,28 @@ async def upload_gitlab_export(file: UploadFile = File(...)):
     else:
         return {"error": "Unsupported archive format. Use .zip or .tar.gz"}
 
-    # Process and return URLs to CSVs
-    result_paths = process_gitlab_export(extract_dir, output_dir)
+    # ---- GitStats Section ----
+    project_bundle = next(extract_dir.glob("**/project.bundle"), None)
+    gitstats_url = None
+
+    if project_bundle:
+        gitstats_repo.mkdir(parents=True, exist_ok=True)
+        try:
+            subprocess.run(["git", "clone", str(project_bundle), "."], cwd=gitstats_repo, check=True)
+            subprocess.run(["gitstats", str(gitstats_repo), str(output_dir / "gitstats_report")], check=True)
+            gitstats_url = f"/static/{temp_id}/output/gitstats_report/index.html"
+        except subprocess.CalledProcessError as e:
+            print("GitStats failed:", e)
+    else:
+        print("No project.bundle found.")
+
     return {
         "message": "Processed successfully",
         "files": {
             "issues": f"/static/{temp_id}/output/cleaned_issues.csv",
             "merge_requests": f"/static/{temp_id}/output/cleaned_merge_requests.csv",
-            "comments": f"/static/{temp_id}/output/all_comments.csv"
+            "comments": f"/static/{temp_id}/output/all_comments.csv",
+            "gitstats_report": gitstats_url
         }
     }
 
