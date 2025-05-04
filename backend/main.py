@@ -64,6 +64,9 @@ async def upload_gitlab_export(file: UploadFile = File(...)):
     else:
         print("No project.bundle found.")
 
+    # Process the NDJSON files into CSVs
+    result_paths = process_gitlab_export(extract_dir, output_dir)
+
     return {
         "message": "Processed successfully",
         "files": {

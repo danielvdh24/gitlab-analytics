@@ -36,6 +36,8 @@ const Index = () => {
       const baseUrl = "https://gitlab-analytics.onrender.com";
       const normalize = (path: string) => path.replace(/^\/+/, "");
 
+      setGitstatsUrl(`${baseUrl}/${normalize(result.files.gitstats)}`);
+
       // Fetch CSV files
       const [issuesCSV, mergeRequestsCSV, commentsCSV] = await Promise.all([
         fetch(`${baseUrl}/${normalize(result.files.issues)}`).then((res) => res.text()),
