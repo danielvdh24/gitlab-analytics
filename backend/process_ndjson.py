@@ -77,7 +77,8 @@ def process_gitlab_export(extracted_path: Path, output_path: Path):
         'award_emoji', 'confidential', 'designs', 'design_versions', 'discussion_locked', 'due_date',
         'events', 'external_key', 'health_status', 'zoom_meetings', 'work_item_type', 'lock_version',
         'time_estimate', 'relative_position', 'weight', 'timelogs', 'project_id', 'label_links',
-        'resource_label_events', 'resource_state_events', 'resource_milestone_events'
+        'resource_label_events', 'resource_state_events', 'resource_milestone_events', 'last_edited_at',
+        'iid', 'author_id'
     ]
     issues_df.drop(columns=[col for col in drop_issues_cols if col in issues_df.columns], inplace=True)
 
@@ -88,7 +89,7 @@ def process_gitlab_export(extracted_path: Path, output_path: Path):
         'last_edited_at', 'last_edited_by_id', 'discussion_locked', 'rebase_commit_sha', 'squash',
         'allow_maintainer_to_push', 'squash_commit_sha', 'merge_ref_sha', 'draft', 'diff_head_sha',
         'source_branch_sha', 'target_branch_sha', 'approvals_before_merge', 'metrics', 'award_emoji',
-        'timelogs', 'source_project_id'
+        'timelogs', 'source_project_id', 'merge_request_diff', 'author_id'
     ]
     mr_df.drop(columns=[col for col in drop_mr_cols if col in mr_df.columns], inplace=True)
 

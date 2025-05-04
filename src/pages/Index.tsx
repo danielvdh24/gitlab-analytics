@@ -3,6 +3,7 @@ import UploadButton from "../components/UploadButton";
 import LoadingIndicator from "../components/LoadingIndicator";
 import AnalyticsDisplay from "../components/AnalyticsDisplay";
 import { toast } from "@/hooks/use-toast";
+import Papa from "papaparse";
 
 const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -40,15 +41,11 @@ const Index = () => {
       ]);
 
       const parseCSV = (csv: string): Record<string, string>[] => {
-        const [headerLine, ...rowLines] = csv.trim().split("\n");
-        const headers = headerLine.split(",");
-        return rowLines.map((line) => {
-          const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map((val) => val.replace(/^"|"$/g, ""));
-          return headers.reduce<Record<string, string>>((acc, key, i) => {
-            acc[key] = values[i] ?? "";
-            return acc;
-          }, {});
+        const { data } = Papa.parse<Record<string, string>>(csv, {
+          header: true,
+          skipEmptyLines: true,
         });
+        return data;
       };
 
       setCsvData({
